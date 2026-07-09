@@ -40,9 +40,11 @@ CFMachPortRef eventTap;
     if (enAll) {
         [sdClickSpeed setEnabled:YES];
         [sdSensitivity setEnabled:YES];
+        [sdSwipeSensitivity setEnabled:YES];
     } else {
         [sdClickSpeed setEnabled:NO];
         [sdSensitivity setEnabled:NO];
+        [sdSwipeSensitivity setEnabled:NO];
     }
 }
 
@@ -65,6 +67,9 @@ CFMachPortRef eventTap;
     } else if (sender == sdSensitivity) {
         stvt = [sender floatValue];
         [Settings setKey:@"Sensitivity" withFloat:[sender floatValue]];
+    } else if (sender == sdSwipeSensitivity) {
+        swipeSensitivity = [sender floatValue];
+        [Settings setKey:@"SwipeSensitivity" withFloat:swipeSensitivity];
     } else if (sender == loggingMode) {
         logLevel = (int)[sender selectedTag];
         [Settings setKey:@"LogLevel" withInt:(int)[[sender selectedItem] tag]];
@@ -247,6 +252,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     [cbShowIcon setState:[[settings objectForKey:@"ShowIcon"] intValue]];
     [sdClickSpeed setFloatValue:0.5-clickSpeed];
     [sdSensitivity setFloatValue:stvt];
+    [sdSwipeSensitivity setFloatValue:swipeSensitivity];
     [loggingMode selectItemWithTag:logLevel];
 
     [self enUpdated];

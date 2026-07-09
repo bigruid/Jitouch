@@ -25,6 +25,7 @@ int logLevel;
 //Trackpad
 int enTPAll;
 int enHanded;
+float swipeSensitivity;
 
 //Magic Mouse
 int enMMAll;
@@ -63,6 +64,14 @@ CFMachPortRef eventKeyboard;
 @implementation Settings
 
 static int notSynchronize;
+
+static float clampedSwipeSensitivity(float value) {
+    if (value < kSwipeSensitivityMin)
+        return kSwipeSensitivityMin;
+    if (value > kSwipeSensitivityMax)
+        return kSwipeSensitivityMax;
+    return value;
+}
 
 + (void)noteSettingsUpdated {
     [[NSDistributedNotificationCenter defaultCenter] postNotificationName: @"My Notification"
@@ -187,6 +196,7 @@ static int notSynchronize;
     //Trackpad
     [Settings setKey:@"enTPAll" withInt:1];
     [Settings setKey:@"Handed" withInt:0];
+    [Settings setKey:@"SwipeSensitivity" withFloat:kSwipeSensitivityDefault];
 
     //Magic Mouse
     [Settings setKey:@"enMMAll" withInt:1];
@@ -229,6 +239,8 @@ static int notSynchronize;
     //Trackpad
     enTPAll = [[settings objectForKey:@"enTPAll"] intValue];
     enHanded = [[settings objectForKey:@"Handed"] intValue];
+    NSNumber *swipeSensitivityNumber = [settings objectForKey:@"SwipeSensitivity"];
+    swipeSensitivity = swipeSensitivityNumber ? clampedSwipeSensitivity([swipeSensitivityNumber floatValue]) : kSwipeSensitivityDefault;
 
     //Magic Mouse
     enMMAll = [[settings objectForKey:@"enMMAll"] intValue];

@@ -10,6 +10,9 @@
 #define kCurrentRevision 26
 #define kAcceptableOldestRevision 13
 #define appID CFSTR("com.jitouch.Jitouch")
+#define kSwipeSensitivityMin 0.8f
+#define kSwipeSensitivityMax 1.8f
+#define kSwipeSensitivityDefault 1.0f
 
 extern NSMutableDictionary *settings;
 extern NSMutableDictionary *trackpadMap;
@@ -32,6 +35,7 @@ typedef enum log_level_t : int {
 //Trackpad
 extern int enTPAll;
 extern int enHanded;
+extern float swipeSensitivity;
 
 //Magic Mouse
 extern int enMMAll;

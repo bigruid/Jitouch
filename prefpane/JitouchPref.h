@@ -15,6 +15,7 @@
 
     IBOutlet NSSlider *sdClickSpeed;
     IBOutlet NSSlider *sdSensitivity;
+    IBOutlet NSSlider *sdSwipeSensitivity;
     IBOutlet NSSegmentedControl *scAll;
     IBOutlet NSButton *cbShowIcon;
     IBOutlet NSTabView *mainTabView;
