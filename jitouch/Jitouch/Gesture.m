@@ -1661,6 +1661,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
     static double lastThreeFingerTimestamp = -1.0;
     int step = 0;
     static int type = 0;
+    static int swipeTriggered = 0;
     static int l, r;
     bool hasRecentThreeFingerFrame = lastThreeFingerTimestamp >= 0 &&
                                      timestamp - lastThreeFingerTimestamp <= trackpadThreeFingerGracePeriod;
@@ -1692,6 +1693,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
             }
         }
         type = 0;
+        swipeTriggered = 0;
     } else if (step == 2) { //continue three fingers
         float sumx = 0.0f;
         float sumy = 0.0f;
@@ -1712,28 +1714,30 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
             else if (data[i].px - startx[i] > moveXThreshold) moveRight++;
         }
 
-
-        if (moveDown == 3 && type != 1) {
+        if (!swipeTriggered && moveDown == 3 && type != 1) {
             if (sumy < -sumYThreshold) {
                 type = 1;
+                swipeTriggered = 1;
                 dispatchCommand(@"Three-Swipe-Down", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
                 }
             }
-        } else if (moveUp == 3 && type != 2) {
+        } else if (!swipeTriggered && moveUp == 3 && type != 2) {
             if (sumy > sumYThreshold) {
                 type = 2;
+                swipeTriggered = 1;
                 dispatchCommand(@"Three-Swipe-Up", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
                 }
             }
-        } else if (moveLeft == 3 && type != 3) {
+        } else if (!swipeTriggered && moveLeft == 3 && type != 3) {
             if (sumx < -sumXThreshold) {
                 type = 3;
+                swipeTriggered = 1;
                 // TODO: should check if the ACTIVE app is Safari or Firefox and,
                 // if so, check if the mouse cursor is on its active WINDOW
                 // that is, is it able to receive multi-touch events?
@@ -1747,9 +1751,10 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
                     }
                 }
             }
-        } else if (moveRight == 3 && type != 4) {
+        } else if (!swipeTriggered && moveRight == 3 && type != 4) {
             if (sumx > sumXThreshold) {
                 type = 4;
+                swipeTriggered = 1;
                 CFTypeRef axui = axuiUnderMouse();
                 NSString *application = nameOfAxui(axui);
                 if (![application isEqualToString:@"Safari"] && ![application isEqualToString:@"Firefox"]) {
@@ -1814,6 +1819,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
 
     } else if (step == 3) { //end three fingers
         type = 0;
+        swipeTriggered = 0;
     }
 
     lastNFingers = nFingers;
@@ -1825,6 +1831,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
     static int lastNFingers;
     int step = 0;
     static int type = 0;
+    static int swipeTriggered = 0;
 
     if (lastNFingers != 4 && nFingers == 4) {
         step = 1;
@@ -1840,7 +1847,13 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
             starty[i] = data[i].py;
         }
         type = 0;
+        swipeTriggered = 0;
     } else if (step == 2) { //continue four fingers
+        if (swipeTriggered) {
+            lastNFingers = nFingers;
+            return;
+        }
+
         float sumx = 0.0f;
         float sumy = 0.0f;
         int moveDown = 0;
@@ -1863,6 +1876,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         if (moveDown == 4) {
             if (sumy < -sumYThreshold && type != 1) {
                 type = 1;
+                swipeTriggered = 1;
                 dispatchCommand(@"Four-Swipe-Down", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
@@ -1872,6 +1886,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveUp == 4 && type != 2) {
             if (sumy > sumYThreshold) {
                 type = 2;
+                swipeTriggered = 1;
                 dispatchCommand(@"Four-Swipe-Up", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
@@ -1881,6 +1896,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveLeft == 4 && type != 3) {
             if (sumx < -sumXThreshold) {
                 type = 3;
+                swipeTriggered = 1;
                 dispatchCommand(@"Four-Swipe-Left", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
@@ -1890,6 +1906,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveRight == 4 && type != 4) {
             if (sumx > sumXThreshold) {
                 type = 4;
+                swipeTriggered = 1;
                 dispatchCommand(@"Four-Swipe-Right", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
@@ -1900,6 +1917,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
 
     } else if (step == 3) { //end four fingers
         type = 0;
+        swipeTriggered = 0;
     }
 
     lastNFingers = nFingers;
