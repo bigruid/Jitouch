@@ -207,6 +207,8 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         [launchAgent isEqualToString:
          [NSString stringWithContentsOfFile:plistPath encoding:NSUTF8StringEncoding error:&error]
         ]) {
+        if (![self jitouchIsRunning])
+            [self loadJitouchLaunchAgent];
         return;
     }
     // create the LaunchAgents directory
@@ -289,7 +291,12 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
 }
 
 - (void)willSelect {
-    BOOL trusted = AXIsProcessTrustedWithOptions((CFDictionaryRef)@{(id)kAXTrustedCheckOptionPrompt: @(YES)});
+    [[NSDistributedNotificationCenter defaultCenter] postNotificationName: @"JitouchCheckAccessibilityPermission"
+                                                                   object: @"com.jitouch.Jitouch.PrefpaneTarget"
+                                                                 userInfo: nil
+                                                       deliverImmediately: YES];
+
+    BOOL trusted = AXIsProcessTrusted();
 
     if (trusted && !eventKeyboard) {
         CGEventMask eventMask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp);

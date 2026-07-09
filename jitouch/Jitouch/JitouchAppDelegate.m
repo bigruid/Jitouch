@@ -151,6 +151,15 @@ CGKeyCode keyMap[128]; // for dvorak support
     AXIsProcessTrustedWithOptions((CFDictionaryRef)@{(id)kAXTrustedCheckOptionPrompt: @(YES)});
 }
 
+- (void)scheduleAXAPICheck {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkAXAPI) object:nil];
+    [self performSelector:@selector(checkAXAPI) withObject:nil afterDelay:0.5];
+}
+
+- (void)checkAXAPIRequested:(NSNotification *)aNotification {
+    [self scheduleAXAPICheck];
+}
+
 /*
 void languageChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
     for (int i = 0; i < 128; i++)
@@ -192,11 +201,16 @@ void languageChanged(CFNotificationCenterRef center, void *observer, CFStringRef
 
     //[self showIcon];
 
-    [self checkAXAPI];
+    [self scheduleAXAPICheck];
 
     [[NSDistributedNotificationCenter defaultCenter] addObserver: self
                                                         selector: @selector(settingsUpdated:)
                                                             name: @"My Notification"
+                                                          object: @"com.jitouch.Jitouch.PrefpaneTarget"];
+
+    [[NSDistributedNotificationCenter defaultCenter] addObserver: self
+                                                        selector: @selector(checkAXAPIRequested:)
+                                                            name: @"JitouchCheckAccessibilityPermission"
                                                           object: @"com.jitouch.Jitouch.PrefpaneTarget"];
 
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self selector:@selector(wokeUp:) name:NSWorkspaceDidWakeNotification object: NULL];

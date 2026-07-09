@@ -563,7 +563,7 @@
 
 - (IBAction)cancelCommandSheet:(id)sender {
     [gestureTableView hidePreview];
-    CGEventTapEnable(eventKeyboard, false);
+    if (eventKeyboard) CGEventTapEnable(eventKeyboard, false);
     [NSApp endSheet:commandSheet];
 
 }
@@ -571,7 +571,7 @@
 
 - (IBAction)commitCommandSheet:(id)sender {
     [gestureTableView hidePreview];
-    CGEventTapEnable(eventKeyboard, false);
+    if (eventKeyboard) CGEventTapEnable(eventKeyboard, false);
     [NSApp endSheet:commandSheet];
     NSString *newApplication = [applicationButton titleOfSelectedItem];
     NSString *newApplicationPath = [applicationButton pathOfSelectedItem];
