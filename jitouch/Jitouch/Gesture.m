@@ -1713,8 +1713,10 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
             if (data[i].px - startx[i] < -moveXThreshold) moveLeft++;
             else if (data[i].px - startx[i] > moveXThreshold) moveRight++;
         }
+        bool hasObviousHorizontalMovement = moveLeft == 3 || moveRight == 3 ||
+                                            sumx < -sumXThreshold || sumx > sumXThreshold;
 
-        if (!swipeTriggered && moveDown == 3 && type != 1) {
+        if (!swipeTriggered && moveDown == 3 && !hasObviousHorizontalMovement && type != 1) {
             if (sumy < -sumYThreshold) {
                 type = 1;
                 swipeTriggered = 1;
@@ -1724,7 +1726,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, d
                     starty[i] = data[i].py;
                 }
             }
-        } else if (!swipeTriggered && moveUp == 3 && type != 2) {
+        } else if (!swipeTriggered && moveUp == 3 && !hasObviousHorizontalMovement && type != 2) {
             if (sumy > sumYThreshold) {
                 type = 2;
                 swipeTriggered = 1;
