@@ -129,6 +129,8 @@ static int middleClickFlag, magicMouseThreeFingerFlag, trackpadThreeFingerFlag;
 static int trackpadNFingers, trackpadClicked;
 static int autoScrollFlag;
 static int moveResizeFlag, shouldExitMoveResize;
+static const double trackpadThreeFingerGracePeriod = 0.10;
+static double lastTrackpadThreeFingerTouchTime = -1.0;
 
 // distance between two fingers to suppress left click in next/prev tab gesture
 static float twoFingersDistance = 100.0f;
@@ -193,6 +195,18 @@ static float cosineBetweenVectors(float v0x, float v0y, float v1x, float v1y) {
     return (v0x*v1x + v0y*v1y) / sqrtf((v0x*v0x + v0y*v0y) * (v1x*v1x + v1y*v1y));
 }
 
+static void updateTrackpadThreeFingerState(int rawNFingers, int filteredNFingers) {
+    trackpadThreeFingerFlag = (rawNFingers == 3 || filteredNFingers == 3);
+    if (trackpadThreeFingerFlag) {
+        lastTrackpadThreeFingerTouchTime = CFAbsoluteTimeGetCurrent();
+    }
+}
+
+static bool shouldSuppressTrackpadThreeFingerScroll(void) {
+    return lastTrackpadThreeFingerTouchTime >= 0 &&
+           CFAbsoluteTimeGetCurrent() - lastTrackpadThreeFingerTouchTime <= trackpadThreeFingerGracePeriod;
+}
+
 static bool familyIsBuiltinTrackpad(int familyID) {
     for (int i = 0; i < sizeof(builtinTrackpadFamilyIDs) / sizeof(builtinTrackpadFamilyIDs[0]); i++) {
         if(builtinTrackpadFamilyIDs[i] == familyID)
@@ -219,6 +233,7 @@ static bool familyIsMagicTrackpad(int familyID) {
 
 static void turnOffTrackpad() {
     trackpadThreeFingerFlag = 0;
+    lastTrackpadThreeFingerTouchTime = -1.0;
     trackpadNFingers = 0;
 }
 
@@ -1635,19 +1650,29 @@ static void gestureTrackpadOneFixOneTap(const Finger *data, int nFingers, double
 }
 
 
-static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
+static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers, double timestamp) {
     static float startx[3], starty[3];
     static int lastNFingers;
+    static double lastThreeFingerTimestamp = -1.0;
     int step = 0;
     static int type = 0;
     static int l, r;
+    bool hasRecentThreeFingerFrame = lastThreeFingerTimestamp >= 0 &&
+                                     timestamp - lastThreeFingerTimestamp <= trackpadThreeFingerGracePeriod;
+
+    if (lastNFingers == 3 && nFingers != 3 && hasRecentThreeFingerFrame) {
+        return;
+    }
 
     if (lastNFingers != 3 && nFingers == 3) {
         step = 1;
     } else if (lastNFingers == 3 && nFingers == 3) {
-        step = 2;
+        step = hasRecentThreeFingerFrame ? 2 : 1;
     } else if (lastNFingers == 3 && nFingers != 3) {
         step = 3;
+    }
+    if (nFingers == 3) {
+        lastThreeFingerTimestamp = timestamp;
     }
 
     if (step == 1) { //start three fingers
@@ -2005,6 +2030,7 @@ static void gestureTrackpadAutoScroll(const Finger *data, int nFingers, double t
 
 static int trackpadCallback(MTDeviceRef device, Finger *data, int nFingers, double timestamp, int frame) {
     if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"TrackpadCallback %p", device);
+    int rawNFingers = nFingers;
     trackpadNFingers = nFingers;
     if (nFingers == 2) {
         twoFingersDistance = lenSqrF(data, 0, 1);
@@ -2125,10 +2151,10 @@ static int trackpadCallback(MTDeviceRef device, Finger *data, int nFingers, doub
             for (int i = 0; i < nFingers; i++)
                 data[i].px = 1 - data[i].px;
 
+        updateTrackpadThreeFingerState(rawNFingers, nFingers);
+
         if (!gestureTrackpadMoveResize(data, nFingers, timestamp)) {
             if (!isTrackpadRecognizing) {
-                trackpadThreeFingerFlag = (nFingers == 3);
-
                 gestureTrackpadAutoScroll(data, nFingers, timestamp);
 
                 gestureTrackpadOneFixOneTap(data, nFingers, timestamp);
@@ -2143,7 +2169,7 @@ static int trackpadCallback(MTDeviceRef device, Finger *data, int nFingers, doub
                 gestureTrackpadFourFingerTap(data, nFingers, timestamp);
                 trackpadTab4Triggered = FALSE;
 
-                gestureTrackpadSwipeThreeFingers(data, nFingers);
+                gestureTrackpadSwipeThreeFingers(data, nFingers, timestamp);
                 gestureTrackpadSwipeFourFingers(data, nFingers);
             }
             gestureTrackpadTwoFixOneDoubleTap(data, nFingers, timestamp);
@@ -3035,7 +3061,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         }
 
     } else if (type == kCGEventScrollWheel) {
-        if (trackpadThreeFingerFlag || magicMouseThreeFingerFlag || isTrackpadRecognizing)
+        if (shouldSuppressTrackpadThreeFingerScroll() || magicMouseThreeFingerFlag || isTrackpadRecognizing)
             return NULL;
         else if (autoScrollFlag) {
             int64_t sc = CGEventGetIntegerValueField(event, kCGScrollWheelEventDeltaAxis1);
