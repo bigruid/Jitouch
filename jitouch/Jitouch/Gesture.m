@@ -705,11 +705,9 @@ static void doCommand(NSString *gesture, int device) {
             if ([command isEqualToString:@"-"]) {
 
             } else if ([command isEqualToString:@"Next Tab"]) {
-                [keyUtil simulateKey:@"Tab" ShftDown:NO CtrlDown:YES AltDown:NO CmdDown:NO];
-                //[keyUtil simulateKey:@"]" ShftDown:YES CtrlDown:NO AltDown:NO CmdDown:YES];
+                [keyUtil simulateKey:@"]" ShftDown:YES CtrlDown:NO AltDown:NO CmdDown:YES];
             } else if ([command isEqualToString:@"Previous Tab"]) {
-                [keyUtil simulateKey:@"Tab" ShftDown:YES CtrlDown:YES AltDown:NO CmdDown:NO];
-                //[keyUtil simulateKey:@"[" ShftDown:YES CtrlDown:NO AltDown:NO CmdDown:YES];
+                [keyUtil simulateKey:@"[" ShftDown:YES CtrlDown:NO AltDown:NO CmdDown:YES];
             } else if ([command isEqualToString:@"Open Link in New Tab"]) {
                 CGEventRef ourEvent = CGEventCreate(NULL);
                 CGPoint ourLoc = CGEventGetLocation(ourEvent);
