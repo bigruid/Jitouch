@@ -12,6 +12,7 @@ PREFPANE_STAGING_APP="${ROOT_DIR}/prefpane/Jitouch.app"
 PREFPANE_PRODUCT="${PREFPANE_DERIVED_DATA}/Build/Products/Release/Jitouch.prefPane"
 COMPONENTS_PLIST="${ROOT_DIR}/prefpane/components.plist"
 DISTRIBUTION_XML="${ROOT_DIR}/prefpane/distribution.xml"
+PKG_SCRIPTS_DIR="${ROOT_DIR}/scripts/pkg"
 PRODUCT_BUNDLE_IDENTIFIER="com.jitouch.Jitouch"
 
 build_app() {
@@ -53,10 +54,13 @@ package_installer() {
 
   cp -Rp "${PREFPANE_PRODUCT}" "${built_products_dir}/Jitouch.prefPane"
   cp -Rp "${built_products_dir}/Jitouch.prefPane" "${objroot}/pkg_staging/Jitouch.prefPane"
+  xattr -cr "${built_products_dir}/Jitouch.prefPane"
+  xattr -cr "${objroot}/pkg_staging/Jitouch.prefPane"
 
   pkgbuild \
     --root "${objroot}/pkg_staging/" \
     --component-plist "${COMPONENTS_PLIST}" \
+    --scripts "${PKG_SCRIPTS_DIR}" \
     --identifier "${PRODUCT_BUNDLE_IDENTIFIER}" \
     --version "${version}" \
     "${objroot}/JitouchPrefpane.pkg" \

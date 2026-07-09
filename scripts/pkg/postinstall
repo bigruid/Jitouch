@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -u
+
+AGENT_LABEL="com.jitouch.Jitouch.agent"
+
+console_user() {
+    /usr/bin/stat -f %Su /dev/console 2>/dev/null || true
+}
+
+user_home() {
+    /usr/bin/dscl . -read "/Users/$1" NFSHomeDirectory 2>/dev/null | /usr/bin/sed 's/^NFSHomeDirectory: //'
+}
+
+start_jitouch() {
+    uid="$1"
+    home="$2"
+    plist="${home}/Library/LaunchAgents/com.jitouch.Jitouch.plist"
+
+    if [ ! -f "$plist" ]; then
+        return 0
+    fi
+
+    /bin/launchctl bootstrap "gui/${uid}" "$plist" >/dev/null 2>&1 || true
+    /bin/launchctl kickstart -k "gui/${uid}/${AGENT_LABEL}" >/dev/null 2>&1 || true
+}
+
+user="$(console_user)"
+if [ -z "$user" ] || [ "$user" = "root" ] || [ "$user" = "loginwindow" ]; then
+    exit 0
+fi
+
+uid="$(/usr/bin/id -u "$user" 2>/dev/null || true)"
+home="$(user_home "$user")"
+if [ -z "$uid" ] || [ -z "$home" ]; then
+    exit 0
+fi
+
+start_jitouch "$uid" "$home"
+exit 0
