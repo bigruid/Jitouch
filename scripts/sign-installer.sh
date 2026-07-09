@@ -8,11 +8,12 @@ CURRENT_PROJECT_VERSION="$1"  # e.g. 2.75
 BUILT_PRODUCTS_DIR="build/Jitouch_${CURRENT_PROJECT_VERSION}"
 OBJROOT=build/staging
 PRODUCT_BUNDLE_IDENTIFIER="com.jitouch.Jitouch"
-signing_cert="Developer ID Installer: Aaron Kollasch (5UQY3B3594)"
+signing_cert="${SIGNING_CERTIFICATE:?Set SIGNING_CERTIFICATE to your Developer ID Installer certificate name.}"
+notary_profile="${NOTARY_KEYCHAIN_PROFILE:?Set NOTARY_KEYCHAIN_PROFILE to your notarytool keychain profile.}"
 
 echo "Notarizing Jitouch.prefPane"
 ( cd "$BUILT_PRODUCTS_DIR" && zip -r "Jitouch.prefPane.zip" "Jitouch.prefPane" )
-xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" --keychain-profile "aaron@kollasch.dev" --wait
+xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" --keychain-profile "${notary_profile}" --wait
 xcrun stapler staple "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane"
 
 echo "Making Install-Jitouch.pkg"
@@ -23,6 +24,5 @@ pkgbuild --root ${OBJROOT}/pkg_staging/ --component-plist prefpane/components.pl
 productbuild --distribution prefpane/distribution.xml --package-path ${OBJROOT} --identifier ${PRODUCT_BUNDLE_IDENTIFIER} --version ${CURRENT_PROJECT_VERSION} --sign "${signing_cert}" --timestamp "${BUILT_PRODUCTS_DIR}/Install-Jitouch.pkg"
 
 echo "Notarizing Install-Jitouch.pkg"
-xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Install-Jitouch.pkg" --keychain-profile "aaron@kollasch.dev" --wait
+xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Install-Jitouch.pkg" --keychain-profile "${notary_profile}" --wait
 spctl --assess -vv --type install "${BUILT_PRODUCTS_DIR}/Install-Jitouch.pkg"
-
