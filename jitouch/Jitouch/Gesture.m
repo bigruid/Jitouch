@@ -742,11 +742,7 @@ static void doCommand(NSString *gesture, int device) {
                     [keyUtil simulateKey:@"Z" ShftDown:NO CtrlDown:NO AltDown:NO CmdDown:YES];
                 }
             } else if ([command isEqualToString:@"Close / Close Tab"]) {
-                CFTypeRef tmpRef = nil;
-                if (device != CHARRECOGNITION)
-                    tmpRef = activateWindowAtPosition(x, y);
                 [keyUtil simulateKey:@"W" ShftDown:NO CtrlDown:NO AltDown:NO CmdDown:YES];
-                CFSafeRelease(tmpRef);
             } else if ([command isEqualToString:@"Quit"]) {
                 //if the user's using VMware/RDC, should we send cmd+q or alt+f4 ?
                 if (![application isEqualToString:@"Finder"]) {
